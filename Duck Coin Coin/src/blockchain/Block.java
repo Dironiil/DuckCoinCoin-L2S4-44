@@ -1,36 +1,31 @@
 package blockchain;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 public class Block {
 	
 	/* -- Constants of the block classes -- */
 	
-	private static final int lengthHash = 32;
+	public static final int lengthHash = 32;
 	
 	/* -- Instance variables of the block objects -- */
 	
-	/* Header of the block (hashed by the Sha256 algorithm */
+	/* Header of the block (hashed by the Sha256 algorithm) */
 	
 	private int index;
-	
 	private String timestamp;
-	
 	private String lastHash;
 	private String hashcode; // Special variable : in the header, but not hashed (you can't hash the hashcode itself...)
-	
 	private int nbTransactions;
 	private String merkeRoot;
-	
 	private int nonce;
 	
 	/* Not header of the block (stored but not hashed) */
 	
 	private int difficulty;
-	
-	private Transaction[] transactions;
-	//Alternative, si modification en cours d'existence du block : ArrayList<Transaction> transactions;
+	private ArrayList<String> transactions; // A transformer en ArrayList<Transaction> à l'étape 2
 	
 	
 	/* -- Constructor of the Block class -- */
@@ -40,14 +35,14 @@ public class Block {
 	
 	/**
 	 * Constructor of the Block class, with all instance variable explicitly set.
-	 * @param index
-	 * @param timestamp
-	 * @param lastHash
-	 * @param transactions
-	 * @param difficulty
+	 * @param index The index of the Block
+	 * @param timestamp Time of creation of this block
+	 * @param lastHash The hash of the precedent block in the list
+	 * @param transactions The list of the transactions stored in the block
+	 * @param difficulty The difficulty to hash the block
 	 * @throws IllegalArgumentException If the lastHash argument is not of the correct length.
 	 */
-	public Block(int index, Date timestamp, String lastHash, Transaction[] transactions, int difficulty) {
+	public Block(int index, Date timestamp, String lastHash, ArrayList<String> transactions, int difficulty) {
 		if (lastHash.length() != lengthHash) {
 			throw new IllegalArgumentException("The last hash given to construct the block N°" + index + " is impossible.");
 		}
@@ -66,43 +61,65 @@ public class Block {
 	/**
 	 * Constructor of the Block class, with all instance variables explicitly set except
 	 * the date that will be set at the time of the creation of the object.
-	 * @param index
-	 * @param lastHash
-	 * @param transactions
-	 * @param difficulty
+	 * @param index The index of the block
+	 * @param lastHash The hash of the precedent block in the list
+	 * @param transactions The list of the transactions stored in the block
+	 * @param difficulty The difficulty to hash the block
 	 * @throws IllegalArgumentException If the lastHash argument is not of the correct length/
 	 */
-	public Block(int index, String lastHash, Transaction[] transactions, int difficulty) {
+	public Block(int index, String lastHash, ArrayList<String> transactions, int difficulty) {
 		this(index, new Date(), lastHash, transactions, difficulty);
 	}
 	
-	/* Constructors of the Genesys block (accessible only in the package) */
+	/**
+	 * Constructor of the Block class, timestamped at a given point in time.
+	 * @param lastBlock The precedent block in blockchain.
+	 * @param timestamp Time of creation of this block
+	 * @param transactions The list of the transactions stored in the block
+	 * @param difficulty The difficulty to hash the block
+	 */
+	public Block(Block lastBlock, Date timestamp, ArrayList<String> transactions, int difficulty) {
+		this(lastBlock.getIndex() + 1, timestamp, lastBlock.getHashcode(), transactions, difficulty);
+	}
 	
 	/**
-	 * Constructor of the Genesys block (using a pre-established date).
-	 * @param timestamp
+	 * Constructor of the Block class, timestamped at the current time and using a Block reference to set its
+	 * lastHash and index value.
+	 * @param lastBlock The precedent block in blockchain.
+	 * @param transactions The list of the transactions stored in the block
+	 * @param difficulty The difficulty to hash the block
 	 */
-	protected Block(Date timestamp) {
-		lastHash = "";
+	public Block (Block lastBlock, ArrayList<String> transactions, int difficulty) {
+		this(lastBlock, new Date(), transactions, difficulty);
+	}
+	
+	/* Static "constructors" of the Genesys block (accessible only in the package or by daughter classes) */
+	
+	/**
+	 * <p>Overloaded static constructor of the Genesys block (using a pre-established date).</p>
+	 * <p>/!\ PACKAGE ONLY METHOD</p>
+	 * @param timestamp The time of the creation of this block
+	 * @return The genesys block
+	 */
+	static Block genesys(Date timestamp) {
+		String lastHash = "";
 		for (int i = 0; i < lengthHash; ++i) {
 			lastHash += "0";
 		}
 		
-		index = 0;
-		difficulty = 0;
+		ArrayList<String> transactions = new ArrayList<>();
+		transactions.add("Genesis");
 		
-		setTransactions(new Transaction[] {new Transaction("Génésis")});
-		
-		setTimestamp(timestamp);
-		
-		refreshHashcode();
+		return new Block(0, timestamp, lastHash, transactions, 0);
 	}
 	
 	/**
-	 * Constructor of the genesys block.
+	 * <p>Overloaded static constructor of the genesys block (timestamped at the current time).</p>
+	 * <p>/!\ PACKAGE ONLY METHOD</p>
+	 * @return The genesys block
 	 */
-	protected Block() {
-		this(new Date());
+	static Block genesys() {
+		return Block.genesys(new Date());
 	}
 	
 	
@@ -111,10 +128,6 @@ public class Block {
 	
 	/* Getters */
 	
-	
-	static public int getHashcodeLength() {
-		return lengthHash;
-	}
 	
 	public String getHashcode() {
 		return hashcode;
@@ -140,12 +153,16 @@ public class Block {
 		return timestamp;
 	}
 	
-	public Transaction[] getTransactions() {
+	public ArrayList<String> getTransactions() {
 		return transactions;
 	}
 	
+	public int getDifficulty() {
+		return difficulty;
+	}
 	
-	/* Setters */
+	
+	/* Setters - JE NE SAIS VRAIMENT PAS LESQUELS DOIVENT REELEMENT ETRE DISPONIBLES (après tout, un bloc n'est pas sensé être modifié après création) */
 	
 	
 	/**
@@ -158,15 +175,6 @@ public class Block {
 			refreshHashcode();
 		}
 	}
-	
-	/**
-	 * Getting the difficulty of the block.
-	 * @return The difficulty of the block.
-	 */
-	public int getDifficulty() {
-		return difficulty;
-	}
-	
 	
 	/**
 	 * Setting the index of the block and refreshing its hashcode.
@@ -207,15 +215,25 @@ public class Block {
 	 * Setting the transactions of the block, then refreshes the associated variable and the hashcode.
 	 * @param transactions The new array of Transaction.
 	 */
-	public void setTransactions(Transaction[] transactions) {
+	public void setTransactions(ArrayList<String> transactions) {
 		if (! this.transactions.equals(transactions)) {
 			this.transactions = transactions;
-			nbTransactions = transactions.length;
+			nbTransactions = transactions.size();
 			
-			//merkeRoot = merkleRoot(transactions);
-			
+			refreshMerkleRoot();			
 			refreshHashcode();
 		}
+	}
+	
+	/**
+	 * Adding a transaction to the transaction list of the block, refreshing the Merkle root and the hashcode
+	 * in the process.
+	 * @param transaction The transaction to add.
+	 */
+	public void addTransaction(String transaction) {
+		transactions.add(transaction);
+		refreshMerkleRoot();
+		refreshHashcode();
 	}
 	
 	
@@ -228,11 +246,13 @@ public class Block {
 	 * after the setting of it through {@link #setDifficulty(int) setDifficulty}) in this process.</p>
 	 */
 	private void refreshHashcode() {
+		// @Xavier Ce que j'ai écrit en dessous est une proposition, fais en ce que tu en souhaites !
+		
 		nonce = 0;
 		
-		StringBuffer stringDifficulty = new StringBuffer();
+		String stringDifficulty = "";
 		for (int i = 0; i < difficulty; i++) {
-			stringDifficulty.append(0);
+			stringDifficulty += "0";
 		}
 		
 		// hashCode = hash();
@@ -242,13 +262,17 @@ public class Block {
 		}
 	}
 	
-	// Fonction pour rafraichir l'arbre de Merkle du block après un changement de transactions
-	// public void refreshMerkleRoot() {}
+	/**
+	 * Fonction pour rafraichir l'arbre de Merkle du block après un changement de transactions
+	 */
+	private void refreshMerkleRoot() {
+		//TODO
+	}
 	
 	/* Particular method toString() */
 	
 	@Override
-	public String toString() {
+	public String toString() { // Simplifiable ou modifiable à souhait selon les besoins, c'est juste un premier jet
 		String s = "Block indexed " + index + " timestamped " + timestamp + ", with a Hashcode : " + hashcode + ". Contents : \n" +
 				"Hash of the last block : " + lastHash + "\n" +
 				"Merkle root of the " + nbTransactions + " transaction(s) : " + merkeRoot + "\n" +
