@@ -1,5 +1,6 @@
 package blockchain;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 
@@ -24,7 +25,7 @@ public class Blockchain {
 		this.difficulty = difficulty;
 		
 		blockchain = new LinkedList<>();
-		blockchain.add(new Block());
+		blockchain.add(Block.genesys());
 		
 		numberBlocks = blockchain.size(); // CF le commentaire sur numberBlocks
 	}
@@ -45,7 +46,8 @@ public class Blockchain {
 	}
 	
 	public int getBlockchainSize() {
-		return blockchain.size();
+		return numberBlocks;
+		//return blockchain.size();
 	}
 	
 	
@@ -65,7 +67,7 @@ public class Blockchain {
 	
 	
 	/**
-	 * Overloade method addblock, taking a block and modifying it to add it at the end of the blockchain
+	 * Overloaded method addblock, taking a block and modifying it to add it at the end of the blockchain
 	 * @param block
 	 */
 	public void addBlock(Block block) {
@@ -78,13 +80,13 @@ public class Blockchain {
 	}
 	
 	/**
-	 * Overloaded method addblock, taking a transaction array to add a block to the blockchain at the current date
+	 * Overloaded method addblock, taking a String arraylist (as a transactions list) to add a block to the blockchain at the current date
 	 * @param index
 	 * @param lastHash
 	 * @param transactions
 	 * @param difficulty
 	 */
-	public void addBlock(Transaction[] transactions) {
+	public void addBlock(ArrayList<String> transactions) {
 		int index = blockchain.size();
 		String lastHash = blockchain.get(index - 1).getHashcode();
 		blockchain.add(new Block(index, lastHash, transactions, difficulty));
@@ -93,14 +95,14 @@ public class Blockchain {
 	}
 	
 	/**
-	 * Overloaded method addblock, taking a timestamp and a transaction array to add a block to the blockchain
+	 * Overloaded method addblock, taking a timestamp and a String arraylist (as a transactions list) to add a block to the blockchain
 	 * @param index
 	 * @param timestamp
 	 * @param lastHash
 	 * @param transactions
 	 * @param difficulty
 	 */
-	public void addBlock(Date timestamp, Transaction[] transactions) {
+	public void addBlock(Date timestamp, ArrayList<String> transactions) {
 		int index = blockchain.size();
 		String lastHash = blockchain.get(index - 1).getHashcode();
 		blockchain.add(new Block(index, timestamp, lastHash, transactions, difficulty));
